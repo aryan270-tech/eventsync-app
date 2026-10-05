@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Ticket, ShieldCheck, CreditCard, User, Mail, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Ticket, ShieldCheck, User, Mail, Phone } from 'lucide-react';
 import { useEventContext } from '../context/EventContext';
 import { TicketTier } from '../types/event';
 import { formatCurrency } from '../utils/formatters';
@@ -66,7 +66,7 @@ export const BookingModal: React.FC = () => {
 
       setIsProcessing(false);
       if (success) {
-        // Form state reset handled by context closing modal
+        // Modal closes on success
       }
     }, 600);
   };
@@ -74,18 +74,18 @@ export const BookingModal: React.FC = () => {
   return (
     <div className="modal-overlay" onClick={closeBookingModal}>
       <div
-        className="glass-panel max-w-lg w-full animate-modal relative p-6 border border-slate-700/80 shadow-2xl"
+        className="glass-panel max-w-lg w-full flex flex-col animate-modal relative p-0 overflow-hidden border border-slate-700/80 shadow-2xl" style={{ maxHeight: 'min(90vh, 680px)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        {/* Fixed Modal Header */}
+        <div className="flex items-center justify-between p-5 border-b border-slate-800 shrink-0 bg-slate-950/80">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-violet-600/20 text-violet-400 border border-violet-500/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-violet-600/20 text-violet-400 border border-violet-500/30 flex items-center justify-center shrink-0">
               <Ticket className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-heading font-bold text-lg text-white">Reserve Tickets</h3>
-              <p className="text-xs text-slate-400 truncate max-w-[260px]">{bookingModalEvent.title}</p>
+              <p className="text-xs text-slate-400 truncate max-w-[240px] md:max-w-[300px]">{bookingModalEvent.title}</p>
             </div>
           </div>
 
@@ -97,8 +97,10 @@ export const BookingModal: React.FC = () => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-5">
-          {/* Step 1: Select Tier & Quantity */}
+        {/* Scrollable Form Body */}
+        <form id="booking-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 md:p-6 space-y-4" style={{ paddingBottom: '8px' }}>
+          
+          {/* Step 1: Select Tier */}
           <div>
             <label className="block text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">
               Select Ticket Tier
@@ -107,7 +109,7 @@ export const BookingModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setTicketTier('General')}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all ${
                   ticketTier === 'General'
                     ? 'bg-violet-600/20 border-violet-500 text-white shadow-md'
                     : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -122,7 +124,7 @@ export const BookingModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setTicketTier('VIP')}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all ${
                   ticketTier === 'VIP'
                     ? 'bg-cyan-600/20 border-cyan-500 text-white shadow-md'
                     : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -149,7 +151,7 @@ export const BookingModal: React.FC = () => {
                 {bookingModalEvent.availableSeats} seats available
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((num) => (
                 <button
                   key={num}
@@ -172,7 +174,7 @@ export const BookingModal: React.FC = () => {
           </div>
 
           {/* Step 2: Attendee Details */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
+          <div className="space-y-3 pt-2 border-t border-slate-800">
             <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider">Attendee Information</h4>
 
             {/* Name Input */}
@@ -198,7 +200,7 @@ export const BookingModal: React.FC = () => {
                 <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="email"
-                  placeholder="Email Address (for ticket pass delivery)"
+                  placeholder="Email Address (for pass delivery)"
                   value={attendeeEmail}
                   onChange={(e) => setAttendeeEmail(e.target.value)}
                   className={`w-full bg-slate-950 border rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500 transition-colors ${
@@ -228,7 +230,7 @@ export const BookingModal: React.FC = () => {
           </div>
 
           {/* Pricing Breakdown */}
-          <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-1.5 text-xs">
             <div className="flex justify-between text-slate-400">
               <span>{quantity}x {ticketTier} Pass ({formatCurrency(unitPrice)} ea)</span>
               <span className="font-mono">{formatCurrency(subtotal)}</span>
@@ -243,11 +245,16 @@ export const BookingModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Submit Action */}
+        </form>
+
+        {/* Fixed Sticky Footer - Always Visible Submit Button */}
+        <div className="shrink-0 px-5 py-4 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
           <button
             type="submit"
+            form="booking-form"
             disabled={isProcessing}
-            className="btn-primary w-full py-3 text-sm justify-center"
+            className="btn-primary w-full py-3 text-sm justify-center shadow-lg"
+            style={{ minHeight: '48px' }}
           >
             {isProcessing ? (
               <span className="flex items-center gap-2">
@@ -257,11 +264,11 @@ export const BookingModal: React.FC = () => {
             ) : (
               <span className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                Confirm & Generate Digital Ticket
+                Confirm &amp; Generate Digital Ticket
               </span>
             )}
           </button>
-        </form>
+        </div>
 
       </div>
     </div>

@@ -39,11 +39,13 @@ export const fetchEventById = async (eventId: string): Promise<EventItem | null>
 // Organizer creates a new event
 export const createEventInDb = async (
   eventData: Omit<EventItem, 'id'>,
-  organizerId: string
+  organizerId: string,
+  organizerEmail?: string
 ): Promise<string> => {
   const ref = await addDoc(collection(db, EVENTS_COL), {
     ...eventData,
     organizerId,
+    organizerEmail: organizerEmail || '',
     createdAt: serverTimestamp()
   });
   return ref.id;

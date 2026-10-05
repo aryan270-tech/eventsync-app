@@ -266,8 +266,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     try {
-      const id = await createEventInDb(newEvt, currentUser.uid);
-      setEvents((prev) => [{ id, ...newEvt }, ...prev]);
+      const id = await createEventInDb(newEvt, currentUser.uid, currentUser.email || undefined);
+      setEvents((prev) => [{ id, ...newEvt, organizerId: currentUser.uid, organizerEmail: currentUser.email } as any, ...prev]);
       addToast(`Event "${newEvt.title}" published!`, 'success');
     } catch {
       addToast('Failed to create event. Try again.', 'error');

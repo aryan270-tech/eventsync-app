@@ -6,7 +6,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -45,19 +44,24 @@ export const createBookingInDb = async (
   return ref.id;
 };
 
-// Get all bookings for a specific user
+// Get all bookings for a specific user (sorted client-side to avoid composite index requirement)
 export const fetchUserBookings = async (userId: string): Promise<BookingItem[]> => {
   const q = query(
     collection(db, BOOKINGS_COL),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('userId', '==', userId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
+  const bookings = snap.docs.map((d) => ({
     id: d.id,
     ...d.data()
   } as BookingItem));
+
+  // Sort newest first on client side
+  return bookings.sort((a, b) =>
+    new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime()
+  );
 };
+
 
 // Get all bookings for a specific event (organizer view)
 export const fetchEventBookings = async (eventId: string): Promise<BookingItem[]> => {

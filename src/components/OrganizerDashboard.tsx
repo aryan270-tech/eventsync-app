@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, PlusCircle, DollarSign, Users, Ticket, TrendingUp, Power, X, Layers, CalendarPlus } from 'lucide-react';
 import { useEventContext } from '../context/EventContext';
 import { useAuth } from '../context/AuthContext';
-import { EventCategory } from '../types/event';
+import { EventCategory, BookingItem } from '../types/event';
 import { formatCurrency } from '../utils/formatters';
+import { fetchAllBookings } from '../services/bookingService';
 
 export const OrganizerDashboard: React.FC = () => {
-  const { events, bookings, createEvent, toggleEventStatus } = useEventContext();
+  const { events, bookings: userBookings, createEvent, toggleEventStatus } = useEventContext();
   const { currentUser, userProfile } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [allBookings, setAllBookings] = useState<BookingItem[]>([]);
+  const [loadingStats, setLoadingStats] = useState<boolean>(true);
 
-  // Only show THIS organizer's events (filtered by their uid)
-  const myEvents = events.filter((e) => (e as any).organizerId === currentUser?.uid);
-  // Only show bookings for this organizer's events
-  const myEventIds = new Set(myEvents.map((e) => e.id));
-  const myBookings = bookings.filter((b) => myEventIds.has(b.eventId));
+  // Fetch ALL real attendee bookings from Firestore for global organizer revenue analytics
+  useEffect(() => {
+    let mounted = true;
+    fetchAllBookings()
+      .then((data) => {
+        if (mounted) {
+          setAllBookings(data);
+          setLoadingStats(false);
+        }
+      })
+      .catch(() => setLoadingStats(false));
+    return () => { mounted = false; };
+  }, [userBookings, events]);
+
+  // Display all events in the system catalog
+  const displayEvents = events;
 
   // Form State
   const [title, setTitle] = useState('');
@@ -33,15 +47,24 @@ export const OrganizerDashboard: React.FC = () => {
   const [speakerRole, setSpeakerRole] = useState('');
   const [agendaText, setAgendaText] = useState('');
 
-  // Analytics — scoped to THIS organizer's events only
-  const totalEventsCount = myEvents.length;
-  const confirmedBookings = myBookings.filter((b) => b.status === 'confirmed');
-  const totalBookingsCount = confirmedBookings.reduce((sum, b) => sum + b.quantity, 0);
-  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  // Analytics Calculations
+  const totalEventsCount = displayEvents.length;
+  const confirmedBookings = allBookings.filter((b) => b.status === 'confirmed');
+  
+  // Real revenue calculated from Firestore bookings
+  const firestoreRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  // Real tickets sold calculated from Firestore bookings
+  const firestoreTicketsSold = confirmedBookings.reduce((sum, b) => sum + b.quantity, 0);
+  
+  // Seat-based metrics from event inventory
+  const totalCapacity = displayEvents.reduce((sum, e) => sum + e.totalSeats, 0);
+  const seatsReservedFromInventory = displayEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats), 0);
+  const calculatedRevenueFromInventory = displayEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats) * e.priceGeneral, 0);
 
-  const totalCapacity = myEvents.reduce((sum, e) => sum + e.totalSeats, 0);
-  const totalReserved = myEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats), 0);
-  const overallOccupancy = totalCapacity > 0 ? Math.round((totalReserved / totalCapacity) * 100) : 0;
+  // Combine real Firestore data with seat changes so metrics update immediately
+  const totalBookingsCount = Math.max(firestoreTicketsSold, seatsReservedFromInventory);
+  const totalRevenue = firestoreRevenue > 0 ? firestoreRevenue : calculatedRevenueFromInventory;
+  const overallOccupancy = totalCapacity > 0 ? Math.round((totalBookingsCount / totalCapacity) * 100) : 0;
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +191,7 @@ export const OrganizerDashboard: React.FC = () => {
       <div className="glass-panel p-6 border border-slate-800 space-y-4">
         <h3 className="font-heading font-bold text-lg text-white">Event Inventory & Status Manager</h3>
 
-        {myEvents.length === 0 ? (
+        {displayEvents.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto">
               <CalendarPlus className="w-7 h-7 text-slate-500" />
@@ -190,7 +213,7 @@ export const OrganizerDashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {myEvents.map((evt) => {
+              {displayEvents.map((evt) => {
                 const reserved = evt.totalSeats - evt.availableSeats;
                 const occ = Math.round((reserved / evt.totalSeats) * 100);
 

@@ -73,6 +73,12 @@ export const fetchEventBookings = async (eventId: string): Promise<BookingItem[]
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BookingItem));
 };
 
+// Get ALL bookings across all events (organizer dashboard overview)
+export const fetchAllBookings = async (): Promise<BookingItem[]> => {
+  const snap = await getDocs(collection(db, BOOKINGS_COL));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BookingItem));
+};
+
 // Cancel a booking by ID
 export const cancelBookingInDb = async (bookingId: string): Promise<void> => {
   await updateDoc(doc(db, BOOKINGS_COL, bookingId), { status: 'cancelled' });

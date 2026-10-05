@@ -8,25 +8,35 @@ import { TicketPass } from './components/TicketPass';
 import { MyBookings } from './components/MyBookings';
 import { OrganizerDashboard } from './components/OrganizerDashboard';
 import { Toast } from './components/Toast';
-import { Calendar, Search, Sparkles, Filter, Ticket, ChevronDown } from 'lucide-react';
+import { Calendar, Search, Sparkles, Filter, Ticket } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const { events, filter, setFilter, activeTab } = useEventContext();
 
-  // Filter events based on search query, category, and status
+  // Filter events based on search query, category, and availability status
   const filteredEvents = events.filter((evt) => {
-    // Search Filter
+    const query = filter.searchQuery.trim().toLowerCase();
+
+    // 1. Comprehensive Search across Title, Category, Description, Organizer, Location, Speaker
     const matchesSearch =
-      filter.searchQuery === '' ||
-      evt.title.toLowerCase().includes(filter.searchQuery.toLowerCase()) ||
-      evt.description.toLowerCase().includes(filter.searchQuery.toLowerCase()) ||
-      evt.organizer.toLowerCase().includes(filter.searchQuery.toLowerCase()) ||
-      evt.speaker.name.toLowerCase().includes(filter.searchQuery.toLowerCase());
+      query === '' ||
+      evt.title.toLowerCase().includes(query) ||
+      evt.category.toLowerCase().includes(query) ||
+      evt.description.toLowerCase().includes(query) ||
+      evt.longDescription.toLowerCase().includes(query) ||
+      evt.organizer.toLowerCase().includes(query) ||
+      evt.location.toLowerCase().includes(query) ||
+      evt.speaker.name.toLowerCase().includes(query) ||
+      evt.speaker.role.toLowerCase().includes(query) ||
+      evt.agenda.some((item) => item.toLowerCase().includes(query));
 
-    // Category Filter
-    const matchesCategory = filter.category === 'All' || evt.category === filter.category;
+    // 2. Category Filter Pills (Applies when search input is empty)
+    let matchesCategory = true;
+    if (filter.category !== 'All' && query === '') {
+      matchesCategory = evt.category === filter.category;
+    }
 
-    // Status Filter
+    // 3. Status Filter Dropdown (All, Available, Sold Out)
     let matchesStatus = true;
     if (filter.statusFilter === 'Available') {
       matchesStatus = evt.availableSeats > 0 && evt.status === 'active';
@@ -38,30 +48,6 @@ const MainContent: React.FC = () => {
   });
 
   const totalSeatsAvailable = events.reduce((sum, e) => sum + e.availableSeats, 0);
-
-  const scrollToGrid = () => {
-    const gridElem = document.getElementById('events-grid');
-    if (gridElem) {
-      gridElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const handleLiveEventsClick = () => {
-    setFilter({
-      searchQuery: '',
-      category: 'All',
-      statusFilter: 'All'
-    });
-    scrollToGrid();
-  };
-
-  const handleSeatsOpenClick = () => {
-    setFilter((prev) => ({
-      ...prev,
-      statusFilter: 'Available'
-    }));
-    scrollToGrid();
-  };
 
   return (
     <div className="min-h-screen flex flex-col justify-between text-slate-100">
@@ -89,27 +75,17 @@ const MainContent: React.FC = () => {
                   Explore curated developer conferences, design workshops, and business masterclasses. Reserve seats in real-time and generate verified scannable digital passes.
                 </p>
 
-                {/* Interactive Hero Buttons with Auto-Scroll & Filter */}
-                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono">
-                  <button
-                    onClick={handleLiveEventsClick}
-                    className="flex items-center gap-2 bg-slate-950/90 hover:bg-violet-950/60 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl border border-slate-700/80 hover:border-violet-500/50 transition-all hover:scale-105 cursor-pointer shadow-lg group"
-                    title="Click to reset filters & scroll to all 6 live events"
-                  >
-                    <Calendar className="w-4 h-4 text-violet-400 group-hover:scale-110 transition-transform" />
-                    <span className="font-semibold">{events.length} Events Live</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:translate-y-0.5 transition-transform" />
-                  </button>
+                {/* Live System Stat Information Indicators (Updates dynamically after bookings) */}
+                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-slate-300">
+                  <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800">
+                    <Calendar className="w-3.5 h-3.5 text-violet-400" />
+                    <span>{events.length} Conferences Live</span>
+                  </div>
 
-                  <button
-                    onClick={handleSeatsOpenClick}
-                    className="flex items-center gap-2 bg-slate-950/90 hover:bg-cyan-950/60 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl border border-slate-700/80 hover:border-cyan-500/50 transition-all hover:scale-105 cursor-pointer shadow-lg group"
-                    title="Click to filter available seats & scroll to catalog"
-                  >
-                    <Ticket className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-                    <span className="font-semibold">{totalSeatsAvailable} Seats Open</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:translate-y-0.5 transition-transform" />
-                  </button>
+                  <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800">
+                    <Ticket className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{totalSeatsAvailable} Seats Open</span>
+                  </div>
                 </div>
               </div>
 
@@ -117,8 +93,8 @@ const MainContent: React.FC = () => {
               <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none" />
             </div>
 
-            {/* Event Cards Grid Header with ID target for Smooth Scroll */}
-            <div id="events-grid" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 scroll-mt-24">
+            {/* Event Cards Grid Header */}
+            <div id="events-grid" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div>
                 <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
                   <span>Upcoming Events & Masterclasses</span>
@@ -159,7 +135,7 @@ const MainContent: React.FC = () => {
                 </div>
                 <h3 className="font-heading text-lg font-bold text-white">No Matching Events Found</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Try adjusting your search query or switching categories to see available masterclasses.
+                  No events found matching "{filter.searchQuery}". Try searching for categories like "Music", "Business", "Design", "AI", or resetting filters.
                 </p>
                 <button
                   onClick={() =>
@@ -171,7 +147,7 @@ const MainContent: React.FC = () => {
                   }
                   className="btn-secondary text-xs"
                 >
-                  Reset All Filters
+                  Reset Search & Filters
                 </button>
               </div>
             ) : (

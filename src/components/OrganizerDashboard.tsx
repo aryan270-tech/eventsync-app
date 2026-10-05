@@ -13,7 +13,10 @@ export const OrganizerDashboard: React.FC = () => {
   const [allBookings, setAllBookings] = useState<BookingItem[]>([]);
   const [loadingStats, setLoadingStats] = useState<boolean>(true);
 
-  // Fetch ALL real attendee bookings from Firestore for global organizer revenue analytics
+  // View scope toggle: 'my' (Strict isolation for this organizer) vs 'all' (Global catalog overview)
+  const [viewScope, setViewScope] = useState<'my' | 'all'>('my');
+
+  // Fetch ALL real attendee bookings from Firestore for organizer analytics
   useEffect(() => {
     let mounted = true;
     fetchAllBookings()
@@ -27,8 +30,18 @@ export const OrganizerDashboard: React.FC = () => {
     return () => { mounted = false; };
   }, [userBookings, events]);
 
-  // Display all events in the system catalog
-  const displayEvents = events;
+  // Filter events created by THIS organizer (or system pre-seeded events)
+  const myEvents = events.filter((e) => {
+    const orgId = (e as any).organizerId;
+    return orgId === currentUser?.uid || orgId === 'system' || !orgId;
+  });
+
+  // Display events based on chosen scope
+  const displayEvents = viewScope === 'my' ? myEvents : events;
+  const displayEventIds = new Set(displayEvents.map((e) => e.id));
+
+  // Filter bookings strictly to events in the active display scope
+  const scopedBookings = allBookings.filter((b) => displayEventIds.has(b.eventId));
 
   // Form State
   const [title, setTitle] = useState('');
@@ -47,13 +60,13 @@ export const OrganizerDashboard: React.FC = () => {
   const [speakerRole, setSpeakerRole] = useState('');
   const [agendaText, setAgendaText] = useState('');
 
-  // Analytics Calculations
+  // Analytics Calculations (Scoped to displayEvents)
   const totalEventsCount = displayEvents.length;
-  const confirmedBookings = allBookings.filter((b) => b.status === 'confirmed');
+  const confirmedBookings = scopedBookings.filter((b) => b.status === 'confirmed');
   
-  // Real revenue calculated from Firestore bookings
+  // Real revenue calculated from Firestore bookings for this organizer's events
   const firestoreRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-  // Real tickets sold calculated from Firestore bookings
+  // Real tickets sold calculated from Firestore bookings for this organizer's events
   const firestoreTicketsSold = confirmedBookings.reduce((sum, b) => sum + b.quantity, 0);
   
   // Seat-based metrics from event inventory
@@ -115,13 +128,41 @@ export const OrganizerDashboard: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn-primary text-xs py-2.5 px-5"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Publish New Event</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Data Isolation Scope Toggle */}
+          <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1 text-xs">
+            <button
+              onClick={() => setViewScope('my')}
+              className={`px-3 py-1.5 rounded-lg transition-all font-semibold ${
+                viewScope === 'my'
+                  ? 'bg-violet-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Show only events & revenue owned by your account"
+            >
+              My Events Only
+            </button>
+            <button
+              onClick={() => setViewScope('all')}
+              className={`px-3 py-1.5 rounded-lg transition-all font-semibold ${
+                viewScope === 'all'
+                  ? 'bg-violet-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Show global platform events catalog"
+            >
+              All Platform Catalog
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary text-xs py-2.5 px-5"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Publish New Event</span>
+          </button>
+        </div>
       </div>
 
       {/* Analytics KPI Stat Cards */}

@@ -17,22 +17,22 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const occupancyPercentage = Math.round(((event.totalSeats - event.availableSeats) / event.totalSeats) * 100);
 
   return (
-    <div className="glass-panel group flex flex-col h-full overflow-hidden border border-slate-800 hover:border-violet-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-violet-950/20 hover:-translate-y-1">
+    <div className="glass-panel group flex flex-col h-full overflow-hidden border border-slate-800/80 hover:border-violet-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-950/30 hover:-translate-y-1">
       
-      {/* Cover Image & Badges */}
-      <div className="relative h-48 w-full overflow-hidden bg-slate-950">
+      {/* 1. Top Cover Image Container */}
+      <div className="relative h-48 w-full overflow-hidden bg-slate-950 shrink-0">
         <img
           src={event.image}
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c14] via-transparent to-transparent opacity-90" />
 
-        {/* Category Pill */}
-        <div className="absolute top-3 left-3">
+        {/* Category Pill Badge */}
+        <div className="absolute top-3 left-3 z-10">
           <span
-            className="badge backdrop-blur-md"
+            className="badge backdrop-blur-md shadow-lg"
             style={{
               backgroundColor: categoryStyle.bg,
               color: categoryStyle.text,
@@ -45,25 +45,25 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
         </div>
 
         {/* Status Badge */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 z-10">
           {isSoldOut ? (
-            <span className="badge bg-rose-950/80 text-rose-300 border border-rose-500/40">
+            <span className="badge bg-rose-950/90 text-rose-300 border border-rose-500/40 backdrop-blur-md">
               Sold Out
             </span>
           ) : isLowStock ? (
-            <span className="badge bg-amber-950/80 text-amber-300 border border-amber-500/40 animate-pulse">
+            <span className="badge bg-amber-950/90 text-amber-300 border border-amber-500/40 backdrop-blur-md animate-pulse">
               Only {event.availableSeats} Left!
             </span>
           ) : (
-            <span className="badge bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+            <span className="badge bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
               Active
             </span>
           )}
         </div>
 
-        {/* Location Tag */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-slate-300">
-          <div className="flex items-center gap-1.5 font-medium truncate max-w-[70%]">
+        {/* Location & Organizer Overlay Tag */}
+        <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-xs text-slate-300">
+          <div className="flex items-center gap-1.5 font-medium truncate max-w-[70%] bg-slate-950/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800">
             {event.isOnline ? (
               <Video className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             ) : (
@@ -71,35 +71,35 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
             )}
             <span className="truncate">{event.location}</span>
           </div>
-          <span className="text-[11px] bg-slate-900/80 px-2 py-0.5 rounded text-slate-400 font-mono">
+          <span className="text-[11px] bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-slate-400 font-mono border border-slate-800">
             {event.organizer}
           </span>
         </div>
       </div>
 
-      {/* Card Content */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
+      {/* 2. Card Body Content */}
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
         <div>
           {/* Date & Time */}
           <div className="flex items-center gap-2 text-xs font-semibold text-violet-300 mb-2">
-            <Calendar className="w-3.5 h-3.5" />
+            <Calendar className="w-3.5 h-3.5 text-violet-400" />
             <span>{event.date} • {event.time}</span>
           </div>
 
-          {/* Title */}
+          {/* Event Title */}
           <h3 className="font-heading text-lg font-bold text-white group-hover:text-violet-200 transition-colors line-clamp-2 leading-snug mb-2">
             {event.title}
           </h3>
 
           {/* Short Description */}
-          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
+          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
             {event.description}
           </p>
         </div>
 
         <div>
-          {/* Seat Availability Bar */}
-          <div className="mb-4 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+          {/* Seat Capacity Progress Bar */}
+          <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 mb-4">
             <div className="flex justify-between items-center text-xs mb-1.5">
               <span className="text-slate-400 flex items-center gap-1">
                 <Users className="w-3.5 h-3.5 text-slate-500" /> Seats Reserved

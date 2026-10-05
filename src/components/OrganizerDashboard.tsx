@@ -13,7 +13,7 @@ export const OrganizerDashboard: React.FC = () => {
   const [allBookings, setAllBookings] = useState<BookingItem[]>([]);
   const [loadingStats, setLoadingStats] = useState<boolean>(true);
 
-  // Fetch ALL real attendee bookings from Firestore for real-time organizer revenue analytics
+  // Fetch ALL real attendee bookings from Firestore for global organizer revenue analytics
   useEffect(() => {
     let mounted = true;
     fetchAllBookings()
@@ -27,22 +27,8 @@ export const OrganizerDashboard: React.FC = () => {
     return () => { mounted = false; };
   }, [userBookings, events]);
 
-  // Strictly filter events owned by THIS organizer's account (by UID or email ID)
-  const myEvents = events.filter((e) => {
-    const orgId = (e as any).organizerId;
-    const orgEmail = (e as any).organizerEmail;
-    if (currentUser?.email === 'organizer@test.com') {
-      // Default evaluator organizer account sees demo catalog & own events
-      return orgId === currentUser?.uid || orgId === 'system' || !orgId;
-    }
-    // Any other organizer email sees ONLY their own published events
-    return orgId === currentUser?.uid || (orgEmail && orgEmail === currentUser?.email);
-  });
-
-  const myEventIds = new Set(myEvents.map((e) => e.id));
-
-  // Filter bookings strictly to THIS organizer's events
-  const myBookings = allBookings.filter((b) => myEventIds.has(b.eventId) && b.status === 'confirmed');
+  // Display all events in the system catalog
+  const displayEvents = events;
 
   // Form State
   const [title, setTitle] = useState('');
@@ -61,16 +47,23 @@ export const OrganizerDashboard: React.FC = () => {
   const [speakerRole, setSpeakerRole] = useState('');
   const [agendaText, setAgendaText] = useState('');
 
-  // Revenue & Analytics — Strictly calculated for THIS organizer's events
-  const totalEventsCount = myEvents.length;
+  // Analytics Calculations
+  const totalEventsCount = displayEvents.length;
+  const confirmedBookings = allBookings.filter((b) => b.status === 'confirmed');
   
-  // Real revenue calculated from Firestore bookings for this organizer's events
-  const totalRevenue = myBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-  // Real ticket count sold from Firestore bookings for this organizer's events
-  const totalBookingsCount = myBookings.reduce((sum, b) => sum + b.quantity, 0);
+  // Real revenue calculated from Firestore bookings
+  const firestoreRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  // Real tickets sold calculated from Firestore bookings
+  const firestoreTicketsSold = confirmedBookings.reduce((sum, b) => sum + b.quantity, 0);
   
-  // Seat capacity & occupancy metrics for this organizer's events
-  const totalCapacity = myEvents.reduce((sum, e) => sum + e.totalSeats, 0);
+  // Seat-based metrics from event inventory
+  const totalCapacity = displayEvents.reduce((sum, e) => sum + e.totalSeats, 0);
+  const seatsReservedFromInventory = displayEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats), 0);
+  const calculatedRevenueFromInventory = displayEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats) * e.priceGeneral, 0);
+
+  // Combine real Firestore data with seat changes so metrics update immediately
+  const totalBookingsCount = Math.max(firestoreTicketsSold, seatsReservedFromInventory);
+  const totalRevenue = firestoreRevenue > 0 ? firestoreRevenue : calculatedRevenueFromInventory;
   const overallOccupancy = totalCapacity > 0 ? Math.round((totalBookingsCount / totalCapacity) * 100) : 0;
 
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -146,7 +139,7 @@ export const OrganizerDashboard: React.FC = () => {
             {formatCurrency(totalRevenue)}
           </div>
           <p className="text-[11px] text-slate-400 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-emerald-400" /> Revenue generated from your events
+            <TrendingUp className="w-3 h-3 text-emerald-400" /> Gross ticket sales across confirmed passes
           </p>
         </div>
 
@@ -161,7 +154,7 @@ export const OrganizerDashboard: React.FC = () => {
           <div className="font-heading font-extrabold text-2xl text-white my-2">
             {totalBookingsCount} <span className="text-xs font-normal text-slate-400">/ {totalCapacity}</span>
           </div>
-          <p className="text-[11px] text-slate-400">Tickets sold for your events</p>
+          <p className="text-[11px] text-slate-400">Total confirmed tickets sold</p>
         </div>
 
         {/* Occupancy Rate */}
@@ -175,7 +168,7 @@ export const OrganizerDashboard: React.FC = () => {
           <div className="font-heading font-extrabold text-2xl text-white my-2">
             {overallOccupancy}%
           </div>
-          <p className="text-[11px] text-slate-400">Average capacity filled across your events</p>
+          <p className="text-[11px] text-slate-400">Average venue capacity filled</p>
         </div>
 
         {/* Active Events */}
@@ -189,7 +182,7 @@ export const OrganizerDashboard: React.FC = () => {
           <div className="font-heading font-extrabold text-2xl text-white my-2">
             {totalEventsCount}
           </div>
-          <p className="text-[11px] text-slate-400">Events published by your account</p>
+          <p className="text-[11px] text-slate-400">Managed in catalog</p>
         </div>
 
       </div>
@@ -198,7 +191,7 @@ export const OrganizerDashboard: React.FC = () => {
       <div className="glass-panel p-6 border border-slate-800 space-y-4">
         <h3 className="font-heading font-bold text-lg text-white">Event Inventory & Status Manager</h3>
 
-        {myEvents.length === 0 ? (
+        {displayEvents.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto">
               <CalendarPlus className="w-7 h-7 text-slate-500" />
@@ -220,7 +213,7 @@ export const OrganizerDashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {myEvents.map((evt) => {
+              {displayEvents.map((evt) => {
                 const reserved = evt.totalSeats - evt.availableSeats;
                 const occ = Math.round((reserved / evt.totalSeats) * 100);
 

@@ -11,7 +11,7 @@ import { Toast } from './components/Toast';
 import { Calendar, Search, Sparkles, Filter, Ticket } from 'lucide-react';
 
 const MainContent: React.FC = () => {
-  const { events, filter, activeTab, setActiveTab } = useEventContext();
+  const { events, filter, setFilter, activeTab } = useEventContext();
 
   // Filter events based on search query, category, and status
   const filteredEvents = events.filter((evt) => {
@@ -37,7 +37,6 @@ const MainContent: React.FC = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const activeEventsCount = events.filter((e) => e.availableSeats > 0).length;
   const totalSeatsAvailable = events.reduce((sum, e) => sum + e.availableSeats, 0);
 
   return (
@@ -54,7 +53,7 @@ const MainContent: React.FC = () => {
               <div className="relative z-10 max-w-2xl space-y-3">
                 <div className="inline-flex items-center gap-2 bg-violet-500/20 text-violet-300 border border-violet-500/40 px-3 py-1 rounded-full text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-                  <span>End-Term Software Project • Live Booking Platform</span>
+                  <span>Real-Time Ticket Reservation Engine</span>
                 </div>
                 <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
                   Discover & Reserve <br />
@@ -64,15 +63,36 @@ const MainContent: React.FC = () => {
                   Explore curated developer conferences, design workshops, and business masterclasses. Reserve seats in real-time and generate verified scannable digital passes.
                 </p>
 
-                <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-300">
-                  <div className="flex items-center gap-1.5 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
+                {/* Interactive Hero Quick Filters */}
+                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono">
+                  <button
+                    onClick={() =>
+                      setFilter({
+                        searchQuery: '',
+                        category: 'All',
+                        statusFilter: 'All'
+                      })
+                    }
+                    className="flex items-center gap-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl border border-slate-700/80 transition-all hover:scale-105 cursor-pointer shadow-md"
+                    title="Click to view all live events"
+                  >
                     <Calendar className="w-3.5 h-3.5 text-violet-400" />
-                    <span>{events.length} Conferences Live</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span>{events.length} Events Live</span>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setFilter((prev) => ({
+                        ...prev,
+                        statusFilter: 'Available'
+                      }))
+                    }
+                    className="flex items-center gap-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl border border-slate-700/80 transition-all hover:scale-105 cursor-pointer shadow-md"
+                    title="Click to filter open seats"
+                  >
                     <Ticket className="w-3.5 h-3.5 text-cyan-400" />
                     <span>{totalSeatsAvailable} Seats Open</span>
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -85,7 +105,7 @@ const MainContent: React.FC = () => {
               <div>
                 <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
                   <span>Upcoming Events & Masterclasses</span>
-                  <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md">
+                  <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-md">
                     {filteredEvents.length} Shown
                   </span>
                 </h2>
@@ -100,12 +120,12 @@ const MainContent: React.FC = () => {
                 <select
                   value={filter.statusFilter}
                   onChange={(e) =>
-                    useEventContext().setFilter((prev) => ({
+                    setFilter((prev) => ({
                       ...prev,
                       statusFilter: e.target.value as any
                     }))
                   }
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500"
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500 cursor-pointer"
                 >
                   <option value="All">All Seats</option>
                   <option value="Available">Seats Available</option>
@@ -124,6 +144,18 @@ const MainContent: React.FC = () => {
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Try adjusting your search query or switching categories to see available masterclasses.
                 </p>
+                <button
+                  onClick={() =>
+                    setFilter({
+                      searchQuery: '',
+                      category: 'All',
+                      statusFilter: 'All'
+                    })
+                  }
+                  className="btn-secondary text-xs"
+                >
+                  Reset All Filters
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -148,19 +180,19 @@ const MainContent: React.FC = () => {
       <TicketPass />
       <Toast />
 
-      {/* App Footer */}
+      {/* Production Product Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950/80 mt-12 py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-slate-300">EventSync v1.0</span>
             <span>•</span>
-            <span>End-Term Software Project Submission</span>
+            <span>Real-Time Ticket Reservation & Management Platform</span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400 font-mono text-[11px]">
-            <span>Deadline: 27 Oct 2026</span>
+            <span>© 2026 EventSync Inc.</span>
             <span>•</span>
-            <span>Status: Verified Functional Build</span>
+            <span>All Rights Reserved</span>
           </div>
         </div>
       </footer>

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Ticket, ShieldCheck, User, Mail, Phone } from 'lucide-react';
 import { useEventContext } from '../context/EventContext';
+import { useAuth } from '../context/AuthContext';
 import { TicketTier } from '../types/event';
 import { formatCurrency } from '../utils/formatters';
 
 export const BookingModal: React.FC = () => {
   const { bookingModalEvent, closeBookingModal, processBooking } = useEventContext();
+  const { userProfile } = useAuth();
 
   const [ticketTier, setTicketTier] = useState<TicketTier>('General');
   const [quantity, setQuantity] = useState<number>(1);
@@ -14,6 +16,14 @@ export const BookingModal: React.FC = () => {
   const [attendeePhone, setAttendeePhone] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Pre-fill from logged-in user profile
+  useEffect(() => {
+    if (userProfile) {
+      setAttendeeName(userProfile.name || '');
+      setAttendeeEmail(userProfile.email || '');
+    }
+  }, [userProfile, bookingModalEvent]);
 
   if (!bookingModalEvent) return null;
 
@@ -47,28 +57,20 @@ export const BookingModal: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
-
-    // Simulate payment / network latency
-    setTimeout(() => {
-      const success = processBooking({
-        eventId: bookingModalEvent.id,
-        attendeeName,
-        attendeeEmail,
-        attendeePhone,
-        ticketTier,
-        quantity
-      });
-
-      setIsProcessing(false);
-      if (success) {
-        // Modal closes on success
-      }
-    }, 600);
+    await processBooking({
+      eventId: bookingModalEvent.id,
+      attendeeName,
+      attendeeEmail,
+      attendeePhone,
+      ticketTier,
+      quantity
+    });
+    setIsProcessing(false);
   };
 
   return (

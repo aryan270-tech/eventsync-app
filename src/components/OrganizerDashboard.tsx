@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, PlusCircle, DollarSign, Users, Ticket, Calendar, TrendingUp, Power, X, Layers } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, DollarSign, Users, Ticket, TrendingUp, Power, X, Layers, CalendarPlus } from 'lucide-react';
 import { useEventContext } from '../context/EventContext';
+import { useAuth } from '../context/AuthContext';
 import { EventCategory } from '../types/event';
 import { formatCurrency } from '../utils/formatters';
 
 export const OrganizerDashboard: React.FC = () => {
   const { events, bookings, createEvent, toggleEventStatus } = useEventContext();
+  const { currentUser, userProfile } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+
+  // Only show THIS organizer's events (filtered by their uid)
+  const myEvents = events.filter((e) => (e as any).organizerId === currentUser?.uid);
+  // Only show bookings for this organizer's events
+  const myEventIds = new Set(myEvents.map((e) => e.id));
+  const myBookings = bookings.filter((b) => myEventIds.has(b.eventId));
 
   // Form State
   const [title, setTitle] = useState('');
@@ -25,14 +33,14 @@ export const OrganizerDashboard: React.FC = () => {
   const [speakerRole, setSpeakerRole] = useState('');
   const [agendaText, setAgendaText] = useState('');
 
-  // Analytics Calculations
-  const totalEventsCount = events.length;
-  const confirmedBookings = bookings.filter((b) => b.status === 'confirmed');
+  // Analytics — scoped to THIS organizer's events only
+  const totalEventsCount = myEvents.length;
+  const confirmedBookings = myBookings.filter((b) => b.status === 'confirmed');
   const totalBookingsCount = confirmedBookings.reduce((sum, b) => sum + b.quantity, 0);
   const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
 
-  const totalCapacity = events.reduce((sum, e) => sum + e.totalSeats, 0);
-  const totalReserved = events.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats), 0);
+  const totalCapacity = myEvents.reduce((sum, e) => sum + e.totalSeats, 0);
+  const totalReserved = myEvents.reduce((sum, e) => sum + (e.totalSeats - e.availableSeats), 0);
   const overallOccupancy = totalCapacity > 0 ? Math.round((totalReserved / totalCapacity) * 100) : 0;
 
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -80,7 +88,7 @@ export const OrganizerDashboard: React.FC = () => {
             <span className="badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">Real-Time Metrics</span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Track revenue streams, seats occupied across active events, or publish new conferences.
+            Welcome, <span className="text-violet-300 font-semibold">{userProfile?.name}</span> — managing your published events and real-time booking analytics.
           </p>
         </div>
 
@@ -160,6 +168,15 @@ export const OrganizerDashboard: React.FC = () => {
       <div className="glass-panel p-6 border border-slate-800 space-y-4">
         <h3 className="font-heading font-bold text-lg text-white">Event Inventory & Status Manager</h3>
 
+        {myEvents.length === 0 ? (
+          <div className="text-center py-16 space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto">
+              <CalendarPlus className="w-7 h-7 text-slate-500" />
+            </div>
+            <h3 className="font-heading text-lg font-bold text-white">No Events Published Yet</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">Click "Publish New Event" above to create your first event. It will appear here once created.</p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
@@ -173,7 +190,7 @@ export const OrganizerDashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {events.map((evt) => {
+              {myEvents.map((evt) => {
                 const reserved = evt.totalSeats - evt.availableSeats;
                 const occ = Math.round((reserved / evt.totalSeats) * 100);
 
@@ -246,6 +263,7 @@ export const OrganizerDashboard: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Publish New Event Modal */}

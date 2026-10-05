@@ -1,117 +1,140 @@
-# EventSync — Event & Workshop Booking Platform
+# EventSync — Real-Time Event & Ticket Booking Platform
 
-A full-stack, browser-based web application that allows users to discover technical conferences, select date/time slots, reserve ticket passes with zero-overbooking guarantees, generate scannable digital passes, and manage event inventories with real-time organizer analytics.
+A full-stack web application that allows users to discover events, book tickets with real-time seat management, generate digital passes, and manage bookings — backed by Firebase Authentication and Firestore database.
+
+**Live Demo:** https://eventsync-app.vercel.app  
+**GitHub:** https://github.com/aryan270-tech/eventsync-app
 
 ---
 
 ## 📌 Problem Statement
 
-Organizing and attending professional conferences, developer workshops, and tech summits often suffers from fragmented workflows. Attendees struggle with opaque seat availability, missing digital tickets, and complex cancellation processes. On the other hand, event organizers lack real-time visibility into revenue metrics, seat occupancy rates, and catalog management across their published events.
+Organizing and attending professional conferences suffers from fragmented workflows. Attendees struggle with opaque seat availability, missing digital tickets, and complex cancellation processes. Event organizers lack real-time visibility into revenue metrics, seat occupancy rates, and catalog management.
 
 ---
 
 ## 🎯 Target Users
 
-- **Event Attendees / Developers / Students:** Seeking a seamless platform to discover events, filter by category (*Tech & AI, Design, Business, Workshops, Music & Art*), reserve ticket tiers (General vs. VIP), receive scannable digital passes with QR codes, and manage or cancel bookings easily.
-- **Event Hosts / Organizers:** Requiring a real-time command studio to track gross ticket revenue ($), monitor seat occupancy rates (%), manage published event inventory, and publish new events dynamically.
+- **Attendees / Students / Developers** — Browse events, book tickets (General or VIP), receive scannable digital passes, manage and cancel bookings.
+- **Event Organizers / Hosts** — Publish new events, track real-time seat occupancy, monitor revenue analytics, toggle event status (Active/Paused).
 
 ---
 
 ## 💡 Solution
 
-**EventSync** bridges this gap by offering an end-to-end, functional event ticketing software:
+EventSync is an end-to-end event ticketing platform with:
 
-1. **Interactive Event Discovery Engine**: Keyword search across all text fields (titles, categories, descriptions, speakers, locations) and category filter pills.
-2. **Deterministic Booking Wizard**: Tiered pricing calculation (General vs. VIP Pass), atomic seat inventory deduction, and client-side form validation.
-3. **Digital Ticket Passport Generation**: Instant issuance of a scannable digital ticket pass featuring a unique Reference ID (`#EVT-XXXXXX`), attendee details, tier badge, and a scannable QR Code.
-4. **My Bookings & Seat Restoration Engine**: Complete ticket pass wallet with a cancellation workflow that restores reserved seats back to the event inventory automatically.
-5. **Organizer Command Studio**: Live KPI analytics dashboard tracking gross revenue, seat occupancy metrics, event status toggles (*Active / Paused*), and a new event publisher form.
+1. **Authentication** — Email/password login with role selection (Attendee or Organizer)
+2. **Event Discovery** — Multi-field search, category filters, availability filters
+3. **Booking Wizard** — Tiered pricing (General vs VIP), seat validation, Firestore persistence
+4. **Digital Ticket Pass** — Unique booking reference, scannable QR code, attendee details
+5. **Booking Management** — View all bookings, cancel with automatic seat restoration
+6. **Organizer Studio** — Create events, track revenue, monitor seat occupancy per event
 
 ---
 
 ## 🔥 Key Features
 
-- 🔍 **Global Multi-Field Search**: Search for any keyword like `"music"`, `"business"`, `"design"`, `"tech"`, `"workshop"`, or speaker name to instantly filter matching events.
-- 🎟️ **Multi-Tier Ticket Selection**: Choose between **General Access** and **VIP Pass** with live price calculation and quantity limits.
-- 📱 **Digital Ticket Pass & QR Code**: Visual printable pass containing a unique booking reference and scannable QR code element.
-- 🔄 **Automatic Seat Restoration**: Canceling a booking restores the reserved seats back to the event inventory in real-time.
-- 📊 **Organizer Revenue Analytics**: Real-time tracking of total ticket sales revenue ($), total reserved seats, average venue capacity occupancy (%), and active event inventory toggles.
-- 💾 **LocalStorage Persistence**: All bookings, event seat counts, and published events survive page reloads seamlessly.
+- 🔐 **Firebase Authentication** — Secure email/password login, role-based access (Attendee / Organizer)
+- 🗄️ **Firestore Database** — All bookings, events, and user profiles persist permanently
+- 🔍 **Global Search** — Search by title, category, speaker, location, description
+- 🎟️ **Multi-Tier Tickets** — General and VIP pricing with real-time availability check
+- 📱 **Digital Ticket Pass** — Visual pass with unique booking ID and QR code
+- 🔄 **Seat Restoration** — Cancelling a booking automatically restores seats in Firestore
+- 📊 **Organizer Analytics** — Revenue, seat occupancy, event status management
+- ✅ **Role-Based Access** — Organizer Studio only visible to organizer accounts
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend Core**: React 18, TypeScript, Vite
-- **Styling & Aesthetics**: Tailwind CSS (CDN Runtime), HSL Dark Palette (`#0a0c14`), Custom Glassmorphism, Google Fonts (`Inter` & `Outfit`)
-- **Iconography & Visuals**: `lucide-react`, `canvas-confetti`
-- **State Management**: React Context API with `localStorage` persistence
-- **Testing**: Native TypeScript assertions (`src/tests/booking.test.ts`)
-- **Version Control**: Git (Incremental commit trajectory)
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite |
+| Styling | Vanilla CSS, Glassmorphism, Google Fonts (Inter, Outfit) |
+| Authentication | Firebase Authentication (Email/Password) |
+| Database | Cloud Firestore (NoSQL) |
+| State Management | React Context API |
+| Icons | lucide-react |
+| Animations | canvas-confetti |
+| Deployment | Vercel |
+| Version Control | Git + GitHub |
 
 ---
 
-## 🏗️ Architecture & Component Design
+## 🏗️ Architecture
 
 ```
 eventsync-app/
-├── index.html               # Entry HTML with Tailwind CSS CDN & typography
-├── package.json             # NPM dependencies and scripts
-├── vite.config.ts           # Vite bundler configuration
-├── tsconfig.json            # TypeScript compiler options
-├── README.md                # Project documentation
 ├── src/
-│   ├── main.tsx             # React DOM entrypoint
-│   ├── App.tsx              # Main application router and view orchestrator
-│   ├── index.css            # Custom design tokens, glassmorphism, and modal styles
-│   ├── types/
-│   │   └── event.ts         # TypeScript interfaces (EventItem, BookingItem, Filter)
+│   ├── firebase/
+│   │   └── config.ts            # Firebase app initialization (env vars)
 │   ├── context/
-│   │   └── EventContext.tsx # Central state engine (Bookings, Seats, Inventory, Toast)
-│   ├── mock/
-│   │   └── initialEvents.ts # Pre-populated rich conferences dataset
-│   ├── utils/
-│   │   └── formatters.ts    # Currency formatters, ID generators, QR code builder
+│   │   ├── AuthContext.tsx      # Firebase Auth state, login/signup/logout
+│   │   └── EventContext.tsx     # Events + Bookings state (Firestore)
+│   ├── services/
+│   │   ├── eventService.ts      # Firestore CRUD for events
+│   │   └── bookingService.ts    # Firestore CRUD for bookings
+│   ├── pages/
+│   │   └── AuthPage.tsx         # Login / Signup page with role selection
 │   ├── components/
-│   │   ├── Navbar.tsx       # Search bar, tab navigation, category filter pills
-│   │   ├── EventCard.tsx    # Event card with seat availability bar & price
-│   │   ├── EventDetailModal.tsx # Full agenda & keynote speaker detail modal
-│   │   ├── BookingModal.tsx # Ticket tier selection & attendee details wizard
-│   │   ├── TicketPass.tsx   # Scannable digital ticket pass modal with QR code
-│   │   ├── MyBookings.tsx   # User passport wallet & cancellation seat release
-│   │   ├── OrganizerDashboard.tsx # Revenue analytics KPI & new event publisher
-│   │   └── Toast.tsx        # Success & alert notification system
-│   └── tests/
-│       └── booking.test.ts  # Automated unit test suite for seat inventory engine
+│   │   ├── Navbar.tsx           # Navigation, search, user avatar, logout
+│   │   ├── EventCard.tsx        # Event listing card with seat availability
+│   │   ├── EventDetailModal.tsx # Full event detail with agenda & speaker
+│   │   ├── BookingModal.tsx     # Ticket booking wizard (tier, qty, form)
+│   │   ├── TicketPass.tsx       # Digital ticket pass with QR code
+│   │   ├── MyBookings.tsx       # User's bookings from Firestore
+│   │   ├── OrganizerDashboard.tsx # Revenue analytics + event publisher
+│   │   └── Toast.tsx            # Notification system
+│   ├── types/event.ts           # TypeScript interfaces
+│   ├── mock/initialEvents.ts    # Seed data (auto-loaded to Firestore on first run)
+│   └── utils/formatters.ts      # Currency, ID generators, QR builder
+├── .env                         # Firebase config (not committed to Git)
+├── .gitignore                   # Excludes .env and node_modules
+├── index.html                   # HTML entry point
+├── vite.config.ts               # Vite bundler config
+└── tsconfig.json                # TypeScript config
 ```
 
 ---
 
-## 🚀 Local Setup & Installation Instructions
+## 🚀 Local Setup Instructions
 
 ### Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **npm** or **yarn**
+- Node.js v18+
+- npm
+- A Firebase project (see Environment Variables below)
 
-### Steps to Run Locally
+### Steps
 
-1. **Clone or navigate to the repository folder**:
+1. **Clone the repository:**
    ```bash
-   cd C:\Users\Admin\.gemini\antigravity\scratch\eventsync-app
+   git clone https://github.com/aryan270-tech/eventsync-app.git
+   cd eventsync-app
    ```
 
-2. **Install project dependencies**:
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Start the local development server**:
+3. **Set up environment variables** — create a `.env` file in the root:
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+4. **Start the dev server:**
    ```bash
    npm run dev
    ```
-   Open **[http://localhost:3000](http://localhost:3000)** in your web browser.
+   Open **http://localhost:3000**
 
-4. **Verify production bundle**:
+5. **Build for production:**
    ```bash
    npm run build
    ```
@@ -120,25 +143,50 @@ eventsync-app/
 
 ## 🔒 Environment Variables
 
-EventSync operates entirely in client memory and `localStorage`. It requires **zero paid third-party API keys or secret environment variables**, ensuring 100% reliable evaluation without credential expiration or network failure risks.
+| Variable | Description |
+|---|---|
+| `VITE_FIREBASE_API_KEY` | Firebase Web API Key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
+| `VITE_FIREBASE_PROJECT_ID` | Firestore Project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging ID |
+| `VITE_FIREBASE_APP_ID` | Firebase App ID |
+
+> These are client-side config values (not secrets). Firebase security is enforced via Firestore Security Rules.  
+> Never commit your `.env` file — it is already listed in `.gitignore`.
 
 ---
 
-## 🌐 Deployment Instructions
+## 🌐 Deployment
 
-### Option 1: Local Evaluator Execution (Recommended)
-Evaluators can clone the repository and run `npm run dev` to launch the application locally on `http://localhost:3000`.
+The application is live at: **https://eventsync-app.vercel.app**
 
-### Option 2: Deploy to Vercel / Netlify (Public Deployment)
-To host the application on a public URL:
+Deployed via Vercel connected to this GitHub repository. Every push to `main` triggers an automatic redeployment. Firebase environment variables are configured in Vercel's project settings.
 
-1. Push your Git repository to GitHub:
-   ```bash
-   git remote add origin https://github.com/your-username/eventsync-app.git
-   git branch -M main
-   git push -u origin main
-   ```
-2. Log into [Vercel](https://vercel.com) or [Netlify](https://netlify.com).
-3. Select **Import Project** ➔ Pick `eventsync-app` GitHub repository.
-4. Framework Preset: **Vite**
-5. Click **Deploy**. Your app will be live on a public HTTPS URL (e.g. `https://eventsync-app.vercel.app`).
+### To deploy your own instance:
+1. Fork this repository
+2. Create a Firebase project at https://console.firebase.google.com
+3. Enable Email/Password Authentication
+4. Create a Firestore database (Production mode)
+5. Import to Vercel → add all 6 `VITE_FIREBASE_*` environment variables
+6. Deploy
+
+---
+
+## 📋 Core Workflows
+
+| # | Workflow | Description |
+|---|---|---|
+| 1 | **Authentication** | Sign up with role → Login → Logout |
+| 2 | **Event Discovery** | Search + filter by category/availability |
+| 3 | **Ticket Booking** | Select tier → Fill details → Confirm → Digital pass |
+| 4 | **Booking Management** | View bookings → Cancel → Seats restored |
+| 5 | **Organizer Studio** | Create event → Track revenue + occupancy |
+
+---
+
+## 👤 Test Accounts (for evaluator)
+
+Create accounts directly on the live site:
+- **Attendee** — Sign up at https://eventsync-app.vercel.app → select "Attendee"
+- **Organizer** — Sign up at https://eventsync-app.vercel.app → select "Organizer"

@@ -3,7 +3,8 @@
 A full-stack web application that allows users to discover events, book tickets with real-time seat management, generate digital passes, and manage bookings — backed by Firebase Authentication and Firestore database.
 
 **Live Demo:** https://eventsync-app.vercel.app  
-**GitHub:** https://github.com/aryan270-tech/eventsync-app
+**GitHub:** https://github.com/aryan270-tech/eventsync-app  
+**Demo Video:** https://drive.google.com/file/d/1ldst6Grd-zPiDjcxyk32i7KhHC6gLn_2/view?usp=drive_link
 
 ---
 
@@ -182,6 +183,14 @@ Deployed via Vercel connected to this GitHub repository. Every push to `main` tr
 | 3 | **Ticket Booking** | Select tier → Fill details → Confirm → Digital pass |
 | 4 | **Booking Management** | View bookings → Cancel → Seats restored |
 | 5 | **Organizer Studio** | Create event → Track revenue + occupancy |
+
+---
+
+## 🎬 Video Demonstration
+
+Watch the complete project explanation and live demonstration covering the problem statement, technical architecture, attendee booking journey, ticket generation, and organizer analytics dashboard:
+
+🎥 **[Watch the Project Demo Video on Google Drive](https://drive.google.com/file/d/1ldst6Grd-zPiDjcxyk32i7KhHC6gLn_2/view?usp=drive_link)**
 
 ---
 
